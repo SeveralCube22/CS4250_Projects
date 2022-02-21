@@ -54,7 +54,7 @@ def store_document(html, site, url):
     if url == "/":
         url = "root"
     else:
-        url = url.replace("/", "_").replace("?","_").replace("=", "_")
+        url = url.replace("/", "_").replace("?","_").replace("=", "_").replace("%", "").replace("$", "")
     path = "./repository/{}/".format(site)
     if not os.path.exists(path):
         os.makedirs(path)
