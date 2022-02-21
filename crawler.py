@@ -27,7 +27,7 @@ def get_links(html, base_url):
     for link in soup.find_all('a'):
         if link.has_attr("href"):
             url = link["href"]
-            if url == '/': # skip root
+            if url == '/' or url == "": # skip root
                 continue
             if base_url in url:
                 url = url.replace(base_url, "/") # get relative links
@@ -37,27 +37,41 @@ def get_links(html, base_url):
     return links
     
 def populate_frontier(frontier, disallow_links, links):
+    disallowed = {}
     for disallow_link in disallow_links:
         for link in links:
-            if disallow_links[disallow_link]: # not absolute
-                pass
+            if link == disallow_link or (disallow_link in link and disallow_links[disallow_link]): # if absolute or relative
+                disallowed[link] = None
+    for link in links:
+        if link not in disallowed:
+            frontier.append(link)        
         
-
-def store_document(html, url):
+def store_document(html, site, url):
     pass
+    
 
 def crawler():
     for site in seeds:
-        res = requests.get(site).text
-        links = get_links(res, site)
-        frontier = []
-        visited_links = {"/"}
-        # store text from base site
+        frontier = ["/"]
+        visited_links = {}
+        disallowed_links = permits_link(site)
         
-        # process each link in frontier
-        
-        
-    
+        print("Site {}".format(site))
+        while len(frontier) > 0:
+            curr_link = frontier.pop(0)
+            if curr_link not in visited_links:
+                res = requests.get("{}{}".format(site, curr_link))
+                html = res.text
+                links = get_links(html, site)
+                store_document(html, site, curr_link)
+                print("In {}. Links: {}".format(curr_link, len(links)))
+                populate_frontier(frontier, disallowed_links, links)
+                visited_links[curr_link] = None
+                if len(visited_links) >= MAX_LINKS:
+                    break
+        print("TOTAL VISITED LINKS: {}".format(len(visited_links)))
+        print("-------------------------------------")   
 if(__name__ == "__main__"):
+    MAX_LINKS = 1000
     seeds = ["https://www.cbs.com/", "https://www.pokebip.com/", "https://ja.wikipedia.org/"]
-    print(permits_link(seeds[0]))
+    crawler()
