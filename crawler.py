@@ -1,5 +1,8 @@
-from bs4 import BeautifulSoup
 import requests
+import time
+import os
+
+from bs4 import BeautifulSoup
 
 def permits_link(url):
     resp = requests.get("{}/robots.txt".format(url))
@@ -47,9 +50,21 @@ def populate_frontier(frontier, disallow_links, links):
             frontier.append(link)        
         
 def store_document(html, site, url):
-    pass
+    site = site.replace("/", "").replace(":", "").replace(".", "").replace("https", "").replace("www", "").replace("com", "")
+    if url == "/":
+        url = "root"
+    else:
+        url = url.replace("/", "_").replace("?","_").replace("=", "_")
+    path = "./repository/{}/".format(site)
+    if not os.path.exists(path):
+        os.makedirs(path)
+        
+    file = open("{}{}.html".format(path, url), 'w', encoding="utf-16")
     
-
+    soup = BeautifulSoup(html, 'html.parser')
+    file.write(soup.prettify()) 
+    file.close()
+    
 def crawler():
     for site in seeds:
         frontier = ["/"]
@@ -61,10 +76,13 @@ def crawler():
             curr_link = frontier.pop(0)
             if curr_link not in visited_links:
                 res = requests.get("{}{}".format(site, curr_link))
+                time.sleep(1) # to avoid timeout
                 html = res.text
                 links = get_links(html, site)
                 store_document(html, site, curr_link)
-                print("In {}. Links: {}".format(curr_link, len(links)))
+                # process html page: 
+                #   Word occurrences
+                print("In {} Links: {}".format(curr_link, len(links)))
                 populate_frontier(frontier, disallowed_links, links)
                 visited_links[curr_link] = None
                 if len(visited_links) >= MAX_LINKS:
