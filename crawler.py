@@ -6,10 +6,19 @@ def permits_link(url):
     data = resp.text.split("\n")
 
     disallow_links = {}
+    user_agent = False
     for line in data:
-        if "Disallow" in line:
-            link = line.split(":")[1].split()
-            disallow_links[link[0]] = None
+        if "User-agent" in line:
+            agent = line.split(":")[1].strip()
+            user_agent = True if agent == "*" else False
+        
+        if user_agent:
+            if "Disallow" in line:
+                link = line.split(":")[1].strip()
+                value = False
+                if link[-1] == "*": # if last character of link ends with *
+                    value = True 
+                disallow_links[link] = value
     return disallow_links
 
 def get_links(html, base_url):
@@ -18,21 +27,37 @@ def get_links(html, base_url):
     for link in soup.find_all('a'):
         if link.has_attr("href"):
             url = link["href"]
-            if url == '/' or url == '#': # skip root
+            if url == '/': # skip root
                 continue
             if base_url in url:
                 url = url.replace(base_url, "/") # get relative links
-            elif base_url not in url and (url[0] != '/' or url[0] != '#'): # skip links that take to other sites
+            elif base_url not in url and (url[0] != '/'): # skip links that take to other sites
                 continue
             links.append(url)
     return links
     
+def populate_frontier(frontier, disallow_links, links):
+    for disallow_link in disallow_links:
+        for link in links:
+            if disallow_links[disallow_link]: # not absolute
+                pass
+        
+
+def store_document(html, url):
+    pass
+
 def crawler():
-    frontier = []
     for site in seeds:
-        links = get_links(site)
-        # add links to frontier
+        res = requests.get(site).text
+        links = get_links(res, site)
+        frontier = []
+        visited_links = {"/"}
+        # store text from base site
+        
+        # process each link in frontier
+        
+        
     
 if(__name__ == "__main__"):
     seeds = ["https://www.cbs.com/", "https://www.pokebip.com/", "https://ja.wikipedia.org/"]
-    print(get_links(requests.get(seeds[1]).text, seeds[1]))
+    print(permits_link(seeds[0]))
