@@ -120,6 +120,7 @@ def store_word_report(site, word_dictionary):
     
     file = open(write_file, mode, encoding="utf-16")
     if mode == 'w':
+        file.write("\ufeff")
         file.write("WORDS, NUM OCCURENCES\n")
         file = open(write_file, 'a', encoding="utf-16")
         
