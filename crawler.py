@@ -1,8 +1,9 @@
 import requests
 import time
 import os
-
+from collections import Counter
 from bs4 import BeautifulSoup
+import csv
 
 def permits_link(url):
     resp = requests.get("{}/robots.txt".format(url))
@@ -47,14 +48,43 @@ def populate_frontier(frontier, disallow_links, links):
                 disallowed[link] = None
     for link in links:
         if link not in disallowed:
-            frontier.append(link)        
+            frontier.append(link)      
+
+def extract_words(html, word_list):
+    soup = BeautifulSoup(html, "html.parser")
+    for script in soup(["script", "style"]):
+        script.extract()    # rip it out
+
+    text = soup.body.get_text()
+    words = text.lower().split()
+
+    for word in words:
+        word_list.append(word)
+
+def create_word_dictionary(word_list):
+    word_dictionary = {}
+
+    for word in word_list:
+        if word in word_dictionary:
+            word_dictionary[word] += 1
+        else:
+            word_dictionary[word] = 1
+            
+    return word_dictionary
+
+def clean_words(word_list):
+    cleaned_list = []
+    for word in word_list:
+        symbols = "!@#$%^&*()_-+={[}]|\;:\"<>?/., "
+ 
+        for i in range(len(symbols)):
+            word = word.replace(symbols[i], '')
+ 
+        if len(word) > 0:
+            cleaned_list.append(word)
+    return cleaned_list
         
 def store_document(html, site, url):
-    site = site.replace("/", "").replace(":", "").replace(".", "").replace("https", "").replace("www", "").replace("com", "")
-    if url == "/":
-        url = "root"
-    else:
-        url = url.replace("/", "_").replace("?","_").replace("=", "_").replace("%", "").replace("$", "")
     path = "./repository/{}/".format(site)
     if not os.path.exists(path):
         os.makedirs(path)
@@ -65,8 +95,40 @@ def store_document(html, site, url):
     file.write(soup.prettify()) 
     file.close()
     
+def store_links(site, url, outlinks):
+    path = "./reports/links/"
+    if not os.path.exists(path):
+        os.makedirs(path)
+    
+    write_file = "{}{}-{}.csv".format(path, site, "report")
+    mode = 'a' if os.path.exists(write_file) else 'w'
+    
+    file = open(write_file, mode, encoding="utf-16")
+    if mode == 'w':
+        file.write("LINKS, NUM OUT LINKS\n")
+        file = open(write_file, 'a', encoding="utf-16")
+        
+    file.write("{}, {}\n".format(url, outlinks))
+
+def store_word_report(site, word_dictionary):
+    path = "./reports/words/"
+    if not os.path.exists(path):
+        os.makedirs(path)
+    
+    write_file = "{}{}-{}.csv".format(path, site, "report")
+    mode = 'a' if os.path.exists(write_file) else 'w'
+    
+    file = open(write_file, mode, encoding="utf-16")
+    if mode == 'w':
+        file.write("WORDS, NUM OCCURENCES\n")
+        file = open(write_file, 'a', encoding="utf-16")
+        
+    for word in word_dictionary:
+        file.write("{}, {}\n".format(word, word_dictionary[word]))
+    
 def crawler():
     for site in seeds:
+        listofwords = []
         frontier = ["/"]
         visited_links = {}
         disallowed_links = permits_link(site)
@@ -79,17 +141,28 @@ def crawler():
                 time.sleep(1) # to avoid timeout
                 html = res.text
                 links = get_links(html, site)
-                store_document(html, site, curr_link)
+                formatted_site = site.replace("/", "").replace(":", "").replace(".", "").replace("https", "").replace("www", "").replace("com", "")
+                if curr_link == "/":
+                    formatted_link = "root"
+                else:
+                    formatted_link = curr_link.replace("/", "_").replace("?","_").replace("=", "_").replace("%", "").replace("$", "")
+                #store_document(html, formatted_site, formatted_link)
+                store_links(formatted_site, curr_link, len(links))
+                extract_words(html, listofwords)
                 # process html page: 
                 #   Word occurrences
                 print("In {} Links: {}".format(curr_link, len(links)))
                 populate_frontier(frontier, disallowed_links, links)
                 visited_links[curr_link] = None
                 if len(visited_links) >= MAX_LINKS:
+                    print("Finished crawling for domain")
+                    listofwords = clean_words(listofwords)
+                    store_word_report(formatted_site, create_word_dictionary(listofwords))
                     break
         print("TOTAL VISITED LINKS: {}".format(len(visited_links)))
         print("-------------------------------------")   
+        
 if(__name__ == "__main__"):
-    MAX_LINKS = 1000
+    MAX_LINKS = 5
     seeds = ["https://www.cbs.com/", "https://www.pokebip.com/", "https://ja.wikipedia.org/"]
     crawler()
