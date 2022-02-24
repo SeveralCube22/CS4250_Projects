@@ -51,12 +51,7 @@ def populate_frontier(frontier, disallow_links, links):
         if link not in disallowed:
             frontier.append(link)      
 
-def extract_words(html, word_list):
-    soup = BeautifulSoup(html, "html.parser")
-    for script in soup(["script", "style"]):
-        script.extract()    # rip it out
-
-    text = soup.body.get_text()
+def extract_words(text, word_list):
     words = text.lower().split()
 
     for word in words:
@@ -127,7 +122,13 @@ def store_word_report(site, word_dictionary):
         
     for word in word_dictionary:
         file.write("{}, {}\n".format(word, word_dictionary[word]))
-    
+
+def get_html_text_chunk(text):
+    lines = (line.strip() for line in text.splitlines())
+    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+    text = '\n'.join(chunk for chunk in chunks if chunk)
+    return text
+
 def crawler():
     for site in seeds:
         listofwords = []
@@ -142,7 +143,11 @@ def crawler():
                 res = requests.get("{}{}".format(site, curr_link))
                 time.sleep(1) # to avoid timeout
                 html = res.text
-                if(not detect.is_lang(seeds[site], html)):
+                soup = BeautifulSoup(html, "html.parser")
+                for script in soup(["script", "style"]):
+                    script.extract()
+                text = soup.get_text()  
+                if(not detect.is_lang(seeds[site], get_html_text_chunk)):
                     continue
                 links = get_links(html, site)
                 formatted_site = site.replace("/", "").replace(":", "").replace(".", "").replace("https", "").replace("www", "").replace("com", "")
@@ -152,7 +157,7 @@ def crawler():
                     formatted_link = curr_link.replace("/", "_").replace("?","_").replace("=", "_").replace("%", "").replace("$", "")
                 store_document(html, formatted_site, formatted_link)
                 store_links(formatted_site, curr_link, len(links))
-                extract_words(html, listofwords)
+                extract_words(text, listofwords)
                 # process html page: 
                 #   Word occurrences
                 print("In {} Links: {}".format(curr_link, len(links)))
