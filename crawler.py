@@ -4,6 +4,7 @@ import os
 from collections import Counter
 from bs4 import BeautifulSoup
 import csv
+import detect
 
 def permits_link(url):
     resp = requests.get("{}/robots.txt".format(url))
@@ -141,13 +142,15 @@ def crawler():
                 res = requests.get("{}{}".format(site, curr_link))
                 time.sleep(1) # to avoid timeout
                 html = res.text
+                if(not detect.is_lang(seeds[site], html)):
+                    continue
                 links = get_links(html, site)
                 formatted_site = site.replace("/", "").replace(":", "").replace(".", "").replace("https", "").replace("www", "").replace("com", "")
                 if curr_link == "/":
                     formatted_link = "root"
                 else:
                     formatted_link = curr_link.replace("/", "_").replace("?","_").replace("=", "_").replace("%", "").replace("$", "")
-                #store_document(html, formatted_site, formatted_link)
+                store_document(html, formatted_site, formatted_link)
                 store_links(formatted_site, curr_link, len(links))
                 extract_words(html, listofwords)
                 # process html page: 
@@ -165,5 +168,6 @@ def crawler():
         
 if(__name__ == "__main__"):
     MAX_LINKS = 5
-    seeds = ["https://www.cbs.com/", "https://www.pokebip.com/", "https://ja.wikipedia.org/"]
+    seeds = {"https://www.cbs.com/": "en", "https://www.pokebip.com/": "fr", "https://ja.wikipedia.org/": "ja"}
     crawler()
+    
