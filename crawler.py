@@ -147,7 +147,7 @@ def crawler():
                 for script in soup(["script", "style"]):
                     script.extract()
                 text = soup.get_text()  
-                if(not detect.is_lang(seeds[site], get_html_text_chunk)):
+                if(not detect.is_lang(seeds[site], get_html_text_chunk(text))):
                     continue
                 links = get_links(html, site)
                 formatted_site = site.replace("/", "").replace(":", "").replace(".", "").replace("https", "").replace("www", "").replace("com", "")
