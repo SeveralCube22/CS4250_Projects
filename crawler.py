@@ -154,7 +154,7 @@ def crawler():
                 if curr_link == "/":
                     formatted_link = "root"
                 else:
-                    formatted_link = curr_link.replace("/", "_").replace("?","_").replace("=", "_").replace("%", "").replace("$", "")
+                    formatted_link = curr_link.replace("/", "_").replace("?","_").replace("=", "_").replace("%", "").replace("$", "").replace(":", "")
                 store_document(html, formatted_site, formatted_link)
                 store_links(formatted_site, curr_link, len(links))
                 extract_words(text, listofwords)
