@@ -1,4 +1,3 @@
-import os
 import glob
 from bs4 import BeautifulSoup
 
@@ -23,7 +22,6 @@ def inv_idx(dirname):
             for script in soup(["script", "style"]):
                 script.extract()
             text = soup.get_text()
-            print(text)
             extract_words(text, words)
             for word in words:
                 if word not in idx:
@@ -31,3 +29,5 @@ def inv_idx(dirname):
                 if word not in idx[word]:
                     idx[word].append(fi)
     return idx
+       
+#print(inv_idx("files"))
