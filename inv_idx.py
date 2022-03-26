@@ -29,5 +29,17 @@ def inv_idx(dirname):
                 if word not in idx[word]:
                     idx[word].append(fi)
     return idx
+
+def search(dictionary):
+    results = []
+    userInput = input("Please enter your query: ")
+    query = userInput.lower().split()
+    for word in query:
+        results.append(dictionary.get(word))
+    print("Relevant results are: ", end="")
+    print(results)
+        
+    
+
        
-#print(inv_idx("files"))
+search(inv_idx("./repository/cbs"))
