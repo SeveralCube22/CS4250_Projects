@@ -3,7 +3,8 @@ import time
 import os
 from collections import Counter
 from bs4 import BeautifulSoup
-import csv
+import json
+import re
 import detect
 
 def permits_link(url):
@@ -32,11 +33,9 @@ def get_links(html, base_url):
     for link in soup.find_all('a'):
         if link.has_attr("href"):
             url = link["href"]
-            if url == '/' or url == "": # skip root
-                continue
             if base_url in url:
                 url = url.replace(base_url, "/") # get relative links
-            elif base_url not in url and (url[0] != '/'): # skip links that take to other sites
+            elif base_url not in url and (url == "" or url[0] != '/'): # skip links that take to other sites
                 continue
             links.append(url)
     return links
@@ -87,11 +86,7 @@ def store_document(html, site, url):
         
     file = open("{}{}.html".format(path, url), 'w', encoding="utf-16")
     
-    soup = BeautifulSoup(html, 'html.parser')
-    file.write(soup.prettify()) 
-    file.close()
-    
-def store_links(site, url, outlinks):
+def store_out_links(site, url, outlinks):
     path = "./reports/links/"
     if not os.path.exists(path):
         os.makedirs(path)
@@ -101,11 +96,11 @@ def store_links(site, url, outlinks):
     
     file = open(write_file, mode, encoding="utf-16")
     if mode == 'w':
-        file.write("LINKS, NUM OUT LINKS\n")
-        file = open(write_file, 'a', encoding="utf-16")
-        
-    file.write("{}, {}\n".format(url, outlinks))
-
+        file.write("LINKS, NUM OUT LINKS, OUT LINKS\n")
+    
+    formatted_links = ['"{}"'.format(l) for l in outlinks]
+    file.write("{}, {}, {}\n".format(url, len(outlinks), "[" + ",".join(formatted_links) + "]"))
+    
 def store_word_report(site, word_dictionary):
     path = "./reports/words/"
     if not os.path.exists(path):
@@ -156,23 +151,22 @@ def crawler():
                 else:
                     formatted_link = curr_link.replace("/", "_").replace("?","_").replace("=", "_").replace("%", "").replace("$", "").replace(":", "")
                 store_document(html, formatted_site, formatted_link)
-                store_links(formatted_site, curr_link, len(links))
+                store_out_links(formatted_site, curr_link, links)
                 extract_words(text, listofwords)
                 # process html page: 
                 #   Word occurrences
-                print("In {} Links: {}".format(curr_link, len(links)))
+                print("In: {} Visited: {} Links: {}".format(curr_link, len(visited_links), len(links)))
                 populate_frontier(frontier, disallowed_links, links)
                 visited_links[curr_link] = None
                 if len(visited_links) >= MAX_LINKS:
                     print("Finished crawling for domain")
                     listofwords = clean_words(listofwords)
-                    store_word_report(formatted_site, create_word_dictionary(listofwords))
                     break
         print("TOTAL VISITED LINKS: {}".format(len(visited_links)))
         print("-------------------------------------")   
         
 if(__name__ == "__main__"):
-    MAX_LINKS = 5
+    MAX_LINKS = 1000
     seeds = {"https://www.cbs.com/": "en", "https://www.pokebip.com/": "fr", "https://ja.wikipedia.org/": "ja"}
     crawler()
     
