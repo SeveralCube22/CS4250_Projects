@@ -35,7 +35,9 @@ def get_links(html, base_url):
             url = link["href"]
             if base_url in url:
                 url = url.replace(base_url, "/") # get relative links
-            elif base_url not in url or url == "": # skip links that take to other sites
+            elif url != "" and url[0] == '/':
+                url = url
+            else: # skip links that take to other sites
                 continue
             links.append(url)
     return links
