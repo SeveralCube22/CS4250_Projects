@@ -133,7 +133,7 @@ def crawler():
         visited_links = {}
         disallowed_links = permits_link(site)
         
-        print("Site {}".format(site))
+        #print("Site {}".format(site))
         while len(frontier) > 0:
             curr_link = frontier.pop(0)
             if curr_link not in visited_links:
@@ -157,15 +157,15 @@ def crawler():
                 extract_words(text, listofwords)
                 # process html page: 
                 #   Word occurrences
-                print("In: {} Visited: {} Links: {}".format(curr_link, len(visited_links), len(links)))
+                #print("In: {} Visited: {} Links: {}".format(curr_link, len(visited_links), len(links)))
                 populate_frontier(frontier, disallowed_links, links)
                 visited_links[curr_link] = None
                 if len(visited_links) >= MAX_LINKS:
-                    print("Finished crawling for domain")
+                    #print("Finished crawling for domain")
                     listofwords = clean_words(listofwords)
                     break
-        print("TOTAL VISITED LINKS: {}".format(len(visited_links)))
-        print("-------------------------------------")   
+        #print("TOTAL VISITED LINKS: {}".format(len(visited_links)))
+        #print("-------------------------------------")   
         
 if(__name__ == "__main__"):
     MAX_LINKS = 1000

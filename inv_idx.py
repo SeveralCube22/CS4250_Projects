@@ -104,7 +104,6 @@ def rankedBooleanSearch(query):
                     script.extract()
                 text = soup.get_text()
                 extract_words(text, words)
-                multiplier = 1
                 
                 fi = fi[13:]
                 fi = fi.replace("\\","",1)
@@ -117,6 +116,7 @@ def rankedBooleanSearch(query):
                     print(fi + " not found!")
                     
                 result = handleQuery(query, words)
+                #result = result * multiplier
                 print(result)
                 if result > 0:
                     results.append((result, fi))
