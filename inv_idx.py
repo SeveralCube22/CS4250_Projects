@@ -87,9 +87,8 @@ def rankedBooleanSearch(query):
     pageranks = {}
     
     for seed in seed_names:
-        ranks = get_html_format_ranks(seed)
-        for rank in ranks:
-            pageranks[rank] = ranks[rank]
+        rank = get_html_format_ranks(seed)
+        pageranks[seed] = rank
 
     for repo in repo_names:
         files = glob.glob(repo + '/*.html')
@@ -104,22 +103,15 @@ def rankedBooleanSearch(query):
                     script.extract()
                 text = soup.get_text()
                 extract_words(text, words)
+                multiplier = 1
                 
-                fi = fi[13:]
-                fi = fi.replace("\\","",1)
+                split_file_name = fi.split("/")
+                page_rank = float(pageranks[fi[2]][fi[3]].rstrip())
+                rbs = handleQuery(query, words)
                 
-                if fi in pageranks:
-                    multiplier = float(pageranks[fi])
-                    print(fi + " multiplier of " + str(multiplier))
-                else:
-                    multiplier = 0
-                    print(fi + " not found!")
-                    
-                result = handleQuery(query, words)
-                #result = result * multiplier
-                print(result)
-                if result > 0:
-                    results.append((result, fi))
+                overall_score =  rbs * page_rank
+                print("Page rank", page_rank, "Ranked Boolean Score", rbs, "Overall", overall_score)
+                results.append((result, fi))
 
     return(results)
 
