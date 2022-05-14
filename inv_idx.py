@@ -1,4 +1,7 @@
 import glob
+import csv
+import codecs
+from page_rank import get_html_format_ranks
 from bs4 import BeautifulSoup, ResultSet
 
 def extract_words(text, word_list):
@@ -74,16 +77,19 @@ def handleQuery(query, text):
                     score += count1
             count += 1
     return score
-    
-
-
-    
-
 
 def rankedBooleanSearch(query):
     print("Loading...")
+    seed_names = ["cbs", "jawikipediaorg", "pokebip"]
     repo_names = ["./repository/cbs", "./repository/jawikipediaorg", "./repository/pokebip"]
     results = []
+
+    pageranks = {}
+    
+    for seed in seed_names:
+        ranks = get_html_format_ranks(seed)
+        for rank in ranks:
+            pageranks[rank] = ranks[rank]
 
     for repo in repo_names:
         files = glob.glob(repo + '/*.html')
@@ -98,7 +104,20 @@ def rankedBooleanSearch(query):
                     script.extract()
                 text = soup.get_text()
                 extract_words(text, words)
+                multiplier = 1
+                
+                fi = fi[13:]
+                fi = fi.replace("\\","",1)
+                
+                if fi in pageranks:
+                    multiplier = float(pageranks[fi])
+                    print(fi + " multiplier of " + str(multiplier))
+                else:
+                    multiplier = 0
+                    print(fi + " not found!")
+                    
                 result = handleQuery(query, words)
+                print(result)
                 if result > 0:
                     results.append((result, fi))
 

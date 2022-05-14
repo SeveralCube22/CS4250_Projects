@@ -101,19 +101,18 @@ def get_html_format_ranks(site):
         else:
             formatted_link = link.replace("/", "_").replace("?","_").replace("=", "_").replace("%", "").replace("$", "").replace(":", "")
         
-        html_format = "{}.html".format(formatted_site, formatted_link) # These are the same files that are in the repo
+        html_format = "{}{}.html".format(site, formatted_link) # These are the same files that are in the repo
         
         ranks[html_format] = rank
+    
+    #print(ranks)
+    return ranks
                 
 if __name__ == "__main__":
-    seeds = ["https://www.cbs.com/"]
+    seeds = ["cbs", "jawikipediaorg", "pokebip"]
     html_ranks = {} # this is a dict that contains all the html_pages and their corresponding ranks for each site. e.g. {"cbs": {"root.html": .275}, "pokebip": {"root.html": .57879}, etc.}
     for seed in seeds:
         formatted_site = seed.replace("/", "").replace(":", "").replace(".", "").replace("https", "").replace("www", "").replace("com", "")
         
         g = Graph(formatted_site, max_iterations=1000, eps=.1) # constructor saves ranks to file
         html_ranks[formatted_site] = get_html_format_ranks(formatted_site)
-    
-    
-    file = open("./reports/page_ranks/final_report.csv", "w", "utf-16")
-    file.write(json.dumps(html_ranks))
